@@ -1,10 +1,9 @@
 import { EventEmitter } from 'events';
-import { request } from 'http';
 import * as jsonschema from 'jsonschema';
+import { IStore } from '@pedrouid/iso-store';
 
 import {
   IJsonRpcProvider,
-  isJsonRpcRequest,
   JsonRpcRequest,
   JsonRpcResponse,
 } from 'rpc-json-utils';
@@ -27,13 +26,6 @@ export interface JsonRpcAuthenticatorConfig {
 export abstract class ISigner extends IJsonRpcProvider {
   public abstract getAccounts(): Promise<string[]>;
 }
-export abstract class IStore {
-  public abstract init(): Promise<any>;
-  public abstract set<T = any>(key: string, data: T): Promise<void>;
-  public abstract get<T = any>(key: string): Promise<T | undefined>;
-  public abstract delete(key: string): Promise<void>;
-}
-
 export abstract class IPendingRequests {
   public abstract pending: JsonRpcRequest[];
   constructor(public store: IStore) {}

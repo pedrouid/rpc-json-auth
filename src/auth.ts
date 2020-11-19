@@ -8,12 +8,12 @@ import {
   METHOD_NOT_FOUND,
   formatJsonRpcResult,
 } from 'rpc-json-utils';
-import { PendingRequests } from './pending';
+import { IStore } from '@pedrouid/iso-store';
 
+import { PendingRequests } from './pending';
 import {
   IJsonRpcAuthenticator,
   ISigner,
-  IStore,
   JsonRpcAuthenticatorConfig,
   JsonRpcMethodConfig,
 } from './types';

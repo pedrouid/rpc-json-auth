@@ -1,8 +1,8 @@
+import Store from '@pedrouid/iso-store';
 import { JsonRpcRequest } from 'rpc-json-utils';
 import {
   IJsonRpcAuthenticator,
   ISigner,
-  IStore,
   JsonRpcAuthenticator,
   JsonRpcAuthenticatorConfig,
   JsonSchema,
@@ -71,8 +71,7 @@ describe('JsonRpcAuthenticator', () => {
   beforeAll(() => {
     // TODO: implement ISigner
     const signer = {} as ISigner;
-    // TODO: implement IStore
-    const store = {} as IStore;
+    const store = new Store();
     ethereumAuthenticator = new JsonRpcAuthenticator(
       ETHEREUM_SIGNER_JSONRPC_CONFIG,
       signer,

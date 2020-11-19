@@ -63,6 +63,7 @@
     "trailingComma": "es5"
   },
   "dependencies": {
+    "@pedrouid/iso-store": "^1.0.4",
     "jsonschema": "^1.4.0",
     "rpc-json-utils": "^1.1.3"
   }
