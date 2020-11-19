@@ -1,4 +1,4 @@
-import Authenticator from './auth';
+import { JsonRpcAuthenticator as Authenticator } from './auth';
 
 export * from './types';
 

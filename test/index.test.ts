@@ -1,10 +1,14 @@
 import { JsonRpcRequest } from 'rpc-json-utils';
 import {
   IJsonRpcAuthenticator,
+  ISigner,
+  IStore,
   JsonRpcAuthenticator,
   JsonRpcAuthenticatorConfig,
   JsonSchema,
 } from '../src';
+
+const ETHEREUM_CHAIN_ID = 'eip155:1';
 
 const ETHEREUM_TX_JSONRPC_SCHEMA: JsonSchema = {
   type: 'object',
@@ -20,17 +24,20 @@ const ETHEREUM_TX_JSONRPC_SCHEMA: JsonSchema = {
 };
 
 const ETHEREUM_SIGNER_JSONRPC_CONFIG: JsonRpcAuthenticatorConfig = {
-  eth_sendTransaction: {
-    name: 'eth_sendTransaction',
-    description: 'Creates, signs, and sends a new transaction to the network',
-    params: {
-      type: 'array',
-      items: ETHEREUM_TX_JSONRPC_SCHEMA,
+  context: ETHEREUM_CHAIN_ID,
+  methods: {
+    eth_sendTransaction: {
+      name: 'eth_sendTransaction',
+      description: 'Creates, signs, and sends a new transaction to the network',
+      params: {
+        type: 'array',
+        items: ETHEREUM_TX_JSONRPC_SCHEMA,
+      },
+      result: {
+        type: 'string',
+      },
+      userApproval: true,
     },
-    result: {
-      type: 'string',
-    },
-    userApproval: true,
   },
 };
 
@@ -62,8 +69,14 @@ const TEST_JSON_RPC_REQUEST: { [method: string]: JsonRpcRequest } = {
 describe('JsonRpcAuthenticator', () => {
   let ethereumAuthenticator: IJsonRpcAuthenticator;
   beforeAll(() => {
+    // TODO: implement ISigner
+    const signer = {} as ISigner;
+    // TODO: implement IStore
+    const store = {} as IStore;
     ethereumAuthenticator = new JsonRpcAuthenticator(
-      ETHEREUM_SIGNER_JSONRPC_CONFIG
+      ETHEREUM_SIGNER_JSONRPC_CONFIG,
+      signer,
+      store
     );
   });
   it('init', async () => {

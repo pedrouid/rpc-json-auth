@@ -1,20 +1,60 @@
+import { EventEmitter } from 'events';
 import * as jsonschema from 'jsonschema';
-import { JsonRpcRequest } from 'rpc-json-utils';
+import {
+  formatJsonRpcError,
+  JsonRpcRequest,
+  JsonRpcResponse,
+  INVALID_REQUEST,
+  METHOD_NOT_FOUND,
+  formatJsonRpcResult,
+} from 'rpc-json-utils';
+import { PendingRequests } from './pending';
 
 import {
   IJsonRpcAuthenticator,
+  ISigner,
+  IStore,
   JsonRpcAuthenticatorConfig,
   JsonRpcMethodConfig,
 } from './types';
 
-class JsonRpcAuthenticator extends IJsonRpcAuthenticator {
-  constructor(public config: JsonRpcAuthenticatorConfig) {
-    super(config);
+export class JsonRpcAuthenticator extends IJsonRpcAuthenticator {
+  public events = new EventEmitter();
+
+  public pending: PendingRequests;
+
+  constructor(
+    public config: JsonRpcAuthenticatorConfig,
+    public signer: ISigner,
+    store: IStore
+  ) {
+    super(config, signer, store);
     this.config = config;
+    this.pending = new PendingRequests(store, config.context);
+  }
+
+  public on(event: string, listener: any): void {
+    this.events.on(event, listener);
+  }
+
+  public once(event: string, listener: any): void {
+    this.events.once(event, listener);
+  }
+
+  public off(event: string, listener: any): void {
+    this.events.off(event, listener);
+  }
+
+  public async init(): Promise<void> {
+    await this.pending.init();
+  }
+
+  public async getAccounts(): Promise<string[]> {
+    return this.signer.getAccounts();
   }
 
   public supportsMethod(request: JsonRpcRequest): boolean {
-    return Object.keys(this.config).includes(request.method);
+    return Object.keys(this.config.methods).includes(request.method);
   }
 
   public requiresApproval(request: JsonRpcRequest): boolean {
@@ -28,15 +68,30 @@ class JsonRpcAuthenticator extends IJsonRpcAuthenticator {
     return result.valid;
   }
 
+  public async resolve(
+    request: JsonRpcRequest
+  ): Promise<JsonRpcResponse | undefined> {
+    if (!this.supportsMethod(request)) {
+      return formatJsonRpcError(request.id, METHOD_NOT_FOUND);
+    }
+    if (!this.validateRequest(request)) {
+      return formatJsonRpcError(request.id, INVALID_REQUEST);
+    }
+    if (this.requiresApproval(request)) {
+      await this.pending.set(request);
+      this.events.emit('required_user_approval', request);
+      return;
+    }
+    const result = await this.signer.request(request);
+    return formatJsonRpcResult(request.id, result);
+  }
   // -- Private ----------------------------------------------- //
 
   private getJsonRpcConfig(method: string): JsonRpcMethodConfig {
-    const jsonrpc = this.config[method];
+    const jsonrpc = this.config.methods[method];
     if (typeof jsonrpc === 'undefined') {
       throw new Error(`JSON-RPC method not supported: ${method}`);
     }
     return jsonrpc;
   }
 }
-
-export default JsonRpcAuthenticator;
